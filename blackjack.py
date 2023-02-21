@@ -4,7 +4,10 @@ import random
 class Game:
     def __init__(self) -> None:
         self.deck = None
-        self.play = None
+
+        self.ante = 5
+        self.bet = None
+
         self.dealer = None
         self.player = Player()
         self.dealer = Dealer()
@@ -19,6 +22,8 @@ class Game:
         self.deck = Deck()
         self.deck.add_cards()
         self.deck.shuffle()
+
+        self.bet = None
 
         self.player.reset()
         self.dealer.reset()
@@ -98,13 +103,28 @@ class Player:
         self.bust = False
         self.stay = False
 
+    def hit_stay(self):
+        valid = False
+        while not valid:
+            inp = input("Hit or Stay? (h/s) ").lower()
+            if inp == "h" or inp == "hit":
+                valid = True
+                self.draw()
+            elif inp == "s" or inp == "stay":
+                print(f"\nYou stayed. You have {game.player.total}\n")
+                self.stay = True
+                valid = True
+            else:
+                invalid()
+
 
 class Dealer(Player):
     def __init__(self) -> None:
         self.money = None
 
-    def hit_stay(self):
-        pass
+
+def invalid():
+    print("Please input a valid response")
 
 
 def greet():
@@ -114,15 +134,16 @@ def greet():
 
 def ante() -> bool:
     inp = input(
-        "Would you like to ante $5 for the next round? You have "
+        f"Would you like to ante ${game.ante} for the next round? You have "
         f"${game.player.money} (y/n): ").lower()
     if inp == "y":
-        game.player.money -= 5
+        game.player.money -= game.ante
+        game.bet += game.ante
         return True
     elif inp == "n":
         return False
     else:
-        print("Please input a valid response")
+        invalid()
         ante()
 
 
@@ -131,34 +152,55 @@ def initial_draw():
     game.player.draw()
 
     print(f"\nThe dealer drew a {game.dealer.cards[0]}")
-    print(f"\nYou received a {game.player.cards[0]}")
+    print(f"\nYou received a {game.player.cards[0]}\n")
+    game.player.hit_stay()
 
 
 def player_draw() -> bool:
     game.player.draw()
 
-    print(f"\nYou received a {game.player.cards[0]}\n")
+    print(f"\nYou received a {game.player.cards[-1]}\n")
     if game.player.bust:
         print(f"Total:  {game.player.total}. You busted!")
+    if game.player.total == 21:
+        print("You got 21! You stay")
+        game.player.stay = True
     else:
         print("Hand:")
         [print(f"   {card}") for card in game.player.cards]
         print(f"Total: {game.player.total}\n")
 
 
-def player_hit_stay():
-    valid = False
-    while not valid:
-        inp = input("Hit or Stay? (h/s)").lower()
-        if inp == "h" or inp == "hit":
-            valid = True
-            game.player.draw()
-        elif inp == "s" or inp == "stay":
-            print(f"You have {game.player.total}\n")
-            game.player.stay = True
-            valid = True
-        else:
-            print("Please input a valid response")
+def dealer_draw() -> bool:
+    game.dealer.draw()
+
+    print(f"\nDealer received a {game.dealer.cards[-1]}\n")
+    if game.dealer.bust:
+        print(f"Total:  {game.player.total}. Dealer busted!")
+    else:
+        print("Hand:")
+        [print(f"   {card}") for card in game.player.cards]
+        print(f"Total: {game.player.total}\n")
+
+    if game.dealer.total < 17:
+        print("Dealer draws again!")
+        dealer_draw()
+    else:
+        print("Dealer stays!")
+        game.dealer.stay = True
+
+
+def win_loss():
+    if game.player.bust:
+        print("You lost this round!")
+    elif game.player.total == 21 and len(game.player.hand) == 2:
+        print(f"You got BLACKJACK! You received {game.bet}.")
+        game.player.money += game.bet * 3
+    elif game.dealer.bust or game.player.total > game.dealer.total:
+        print(f"You win! You received {game.bet}.")
+        game.player.money += game.bet * 2
+
+    game.reset()
 
 
 game = Game()
@@ -173,13 +215,23 @@ def play_game():
         if not ante():
             break
 
-        initial_draw()
+        initial_draw()  # Player and Dealer receive cards
 
-        while not game.player.bust:
+        # Player turns (hit stay bust)
+        while not game.player.bust and not game.player.stay:
             player_draw()
             if game.player.bust or game.player.stay:
                 break
-            player_hit_stay()
+            game.player.hit_stay()
+
+        # Dealer turns (hit stay bust)
+        # while not game.dealer.bust and not game.dealer.stay:
+        # ?I THINK this handles recursion for us
+        if not game.player.bust:
+            dealer_draw()
+
+        win_loss()
+    print("You are out of money. Thanks for playing!")
 
 
 if __name__ == "__main__":
