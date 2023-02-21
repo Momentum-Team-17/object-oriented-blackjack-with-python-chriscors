@@ -18,7 +18,7 @@ class Game:
 
 class Deck:
     SUITS = ["♥️", "♦️", "♣️", "♠️"]
-    RANKS = [2, 3, 4, 5, 6, 7, 8, 9, 10, "J", "Q", "K", "A"]
+    RANKS = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"]
 
     def __init__(self) -> None:
         self.cards = []
@@ -39,6 +39,13 @@ class Card:
         self.suit = suit
         self.rank = rank
 
+        if self.rank.isdigit():
+            self.value = int(self.rank)
+        elif self.rank == "A":
+            self.value = "A"
+        else:
+            self.value = 10
+
     def __str__(self) -> str:
         return f'{self.rank} of {self.suit}'
 
@@ -46,26 +53,26 @@ class Card:
 class Player:
     def __init__(self) -> None:
         self.money = 100
-        self.card1 = None
-        self.card2 = None
+        self.card = []  # Card player receives
+        self.hand = []  # List of values of cards (number/Ace)
+        self.bust = False
 
-    def initial_draw(self):
-        self.card1 = game.deck.draw_card()
+    def draw(self) -> None:
+        self.card.append(game.deck.draw_card())
+        self.hand.append(self.card[-1].value)
 
 
-class Dealer:
+class Dealer(Player):
     def __init__(self) -> None:
-        self.card1 = None
-        self.card2 = None
+        self.money = None
 
-    def initial_draw(self):
-        self.card1 = game.deck.draw_card()
+    def draw(self):
+        self.card.append(game.deck.draw_card())
 
 
 def greet():
-    print("Welcome to BlackJack! I am your dealer")
-    print("You have $100 to start - each hand has a $5 ante")
-    print()
+    print("---------------------\nWelcome to BlackJack! I am your dealer")
+    print("You have $100 to start - each hand has a $5 ante\n")
 
 
 def ante() -> bool:
@@ -81,12 +88,19 @@ def ante() -> bool:
         ante()
 
 
-def first_hand():
+def initial_draw():
     game.dealer.initial_draw()
-    game.player.initial_draw()
+    game.player.draw()
 
-    print(f"The dealer drew a {game.dealer.card1}")
-    print(f"You received a {game.player.card1}")
+    print(f"\nThe dealer drew a {game.dealer.card[0]}")
+    print(f"\nYou received a {game.player.card[0]}")
+
+
+def player_draw() -> bool:
+    game.player.draw()
+    print(f"\nYou received a {game.player.card[0]}\n")
+    print(f"Hand:\n")
+    [print(f"   {card}")]
 
 
 game = Game()
@@ -101,7 +115,10 @@ def play_game():
         if not ante():
             break
 
-        first_hand()
+        initial_draw()
+
+        while not game.player.bust:
+            player_draw()
 
 
 if __name__ == "__main__":
