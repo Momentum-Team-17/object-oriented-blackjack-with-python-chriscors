@@ -10,10 +10,18 @@ class Game:
         self.dealer = Dealer()
         self.setup()
 
-    def setup(self):
+    def setup(self):  # Initial game set up
         self.deck = Deck()
         self.deck.add_cards()
         self.deck.shuffle()
+
+    def reset(self):  # Reset on new round
+        self.deck = Deck()
+        self.deck.add_cards()
+        self.deck.shuffle()
+
+        self.player.reset()
+        self.dealer.reset()
 
 
 class Deck:
@@ -53,21 +61,48 @@ class Card:
 class Player:
     def __init__(self) -> None:
         self.money = 100
-        self.card = []  # Card player receives
+        self.cards = []  # Card player receives
         self.hand = []  # List of values of cards (number/Ace)
+        self.total = 0
         self.bust = False
 
     def draw(self) -> None:
-        self.card.append(game.deck.draw_card())
-        self.hand.append(self.card[-1].value)
+        """Draws new card, handles hand value assignment and total with Aces
+        """
+        self.cards.append(game.deck.draw_card())
+        self.hand.append(self.cards[-1].value)
+
+        # Calculate total and consider aces
+        if "A" not in self.hand:  # No aces, simple addition
+            self.total = sum(self.hand)
+        else:
+            ace_eleven = sum(
+                [val if val != "A" else 11 for val in self.hand])
+            if ace_eleven <= 21:  # Total with aces < 21, Ace = 11
+                self.total = ace_eleven
+            else:  # Total with aces > 21, Ace = 1
+                ace_one = sum(
+                    [val if val != "A" else 1 for val in self.hand])
+                self.total = ace_one
+
+        if (self.total > 21):
+            self.bust = True
+
+    def reset(self):
+        """Reset hand for new round
+        """
+        self.cards = []  # Card player receives
+        self.hand = []  # List of values of cards (number/Ace)
+        self.total = 0
+        self.bust = False
 
 
 class Dealer(Player):
     def __init__(self) -> None:
         self.money = None
 
-    def draw(self):
-        self.card.append(game.deck.draw_card())
+    def hit_stay(self):
+        pass
 
 
 def greet():
@@ -77,7 +112,8 @@ def greet():
 
 def ante() -> bool:
     inp = input(
-        f"Would you like to ante $5 for the next round? You have ${game.player.money} (y/n): ").lower()
+        "Would you like to ante $5 for the next round? You have "
+        f"${game.player.money} (y/n): ").lower()
     if inp == "y":
         game.player.money -= 5
         return True
@@ -92,15 +128,20 @@ def initial_draw():
     game.dealer.initial_draw()
     game.player.draw()
 
-    print(f"\nThe dealer drew a {game.dealer.card[0]}")
-    print(f"\nYou received a {game.player.card[0]}")
+    print(f"\nThe dealer drew a {game.dealer.cards[0]}")
+    print(f"\nYou received a {game.player.cards[0]}")
 
 
 def player_draw() -> bool:
     game.player.draw()
-    print(f"\nYou received a {game.player.card[0]}\n")
-    print(f"Hand:\n")
-    [print(f"   {card}")]
+
+    print(f"\nYou received a {game.player.cards[0]}\n")
+    if game.player.bust:
+        print(f"Total:  {game.player.total}. You busted!")
+    else:
+        print("Hand:")
+        [print(f"   {card}") for card in game.player.cards]
+        print(f"Total: {game.player.total}\n")
 
 
 game = Game()
@@ -119,6 +160,10 @@ def play_game():
 
         while not game.player.bust:
             player_draw()
+            while not valid:
+            inp = input("Hit or Stay? (h/s)").lower()
+            if inp == "h" or "hit":
+                pass
 
 
 if __name__ == "__main__":
