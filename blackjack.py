@@ -6,7 +6,7 @@ class Game:
         self.deck = None
 
         self.ante = 5
-        self.bet = None
+        self.bet = 0
 
         self.dealer = None
         self.player = Player()
@@ -120,6 +120,7 @@ class Player:
 
 class Dealer(Player):
     def __init__(self) -> None:
+        super().__init__()
         self.money = None
 
 
@@ -148,12 +149,12 @@ def ante() -> bool:
 
 
 def initial_draw():
-    game.dealer.initial_draw()
+    game.dealer.draw()
     game.player.draw()
 
     print(f"\nThe dealer drew a {game.dealer.cards[0]}")
     print(f"\nYou received a {game.player.cards[0]}\n")
-    game.player.hit_stay()
+    # game.player.hit_stay()
 
 
 def player_draw() -> bool:
