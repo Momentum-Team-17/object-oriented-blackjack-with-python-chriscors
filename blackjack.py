@@ -23,7 +23,7 @@ class Game:
         self.deck.add_cards()
         self.deck.shuffle()
 
-        self.bet = None
+        self.bet = 0
 
         self.player.reset()
         self.dealer.reset()
@@ -109,7 +109,10 @@ class Player:
             inp = input("Hit or Stay? (h/s) ").lower()
             if inp == "h" or inp == "hit":
                 valid = True
-                self.draw()
+                if (type(self) == Player):
+                    player_draw()
+                else:
+                    dealer_draw()
             elif inp == "s" or inp == "stay":
                 print(f"\nYou stayed. You have {game.player.total}\n")
                 self.stay = True
@@ -135,7 +138,7 @@ def greet():
 
 def ante() -> bool:
     inp = input(
-        f"Would you like to ante ${game.ante} for the next round? You have "
+        f"\nWould you like to ante ${game.ante} for the next round? You have "
         f"${game.player.money} (y/n): ").lower()
     if inp == "y":
         game.player.money -= game.ante
@@ -150,17 +153,23 @@ def ante() -> bool:
 
 def initial_draw():
     game.dealer.draw()
-    game.player.draw()
-
     print(f"\nThe dealer drew a {game.dealer.cards[0]}")
-    print(f"\nYou received a {game.player.cards[0]}\n")
-    # game.player.hit_stay()
+
+    player_draw(first=True)
+    # print(f"\nYou received a {game.player.cards[0]}\n")
+    game.player.hit_stay()
+    # ?is this the reason for double?
 
 
-def player_draw() -> bool:
+def player_draw(first=False) -> bool:
     game.player.draw()
+    if first:
+        game.player.draw()
+        print(
+            f"\nYou received a {game.player.cards[0]} and a {game.player.cards[1]}\n")
+    else:
+        print(f"\nYou received a {game.player.cards[-1]}\n")
 
-    print(f"\nYou received a {game.player.cards[-1]}\n")
     if game.player.bust:
         print(f"Total:  {game.player.total}. You busted!")
     if game.player.total == 21:
@@ -177,11 +186,11 @@ def dealer_draw() -> bool:
 
     print(f"\nDealer received a {game.dealer.cards[-1]}\n")
     if game.dealer.bust:
-        print(f"Total:  {game.player.total}. Dealer busted!")
+        print(f"Total:  {game.dealer.total}. Dealer busted!")
     else:
         print("Hand:")
-        [print(f"   {card}") for card in game.player.cards]
-        print(f"Total: {game.player.total}\n")
+        [print(f"   {card}") for card in game.dealer.cards]
+        print(f"Total: {game.dealer.total}\n")
 
     if game.dealer.total < 17:
         print("Dealer draws again!")
@@ -200,6 +209,8 @@ def win_loss():
     elif game.dealer.bust or game.player.total > game.dealer.total:
         print(f"You win! You received {game.bet}.")
         game.player.money += game.bet * 2
+    elif game.dealer.bust or game.player.total <= game.dealer.total:
+        print(f"House wins, You lose!")
 
     game.reset()
 
@@ -220,7 +231,7 @@ def play_game():
 
         # Player turns (hit stay bust)
         while not game.player.bust and not game.player.stay:
-            player_draw()
+            # player_draw()
             if game.player.bust or game.player.stay:
                 break
             game.player.hit_stay()
