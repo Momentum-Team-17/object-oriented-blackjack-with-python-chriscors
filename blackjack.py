@@ -65,6 +65,7 @@ class Player:
         self.hand = []  # List of values of cards (number/Ace)
         self.total = 0
         self.bust = False
+        self.stay = False
 
     def draw(self) -> None:
         """Draws new card, handles hand value assignment and total with Aces
@@ -95,6 +96,7 @@ class Player:
         self.hand = []  # List of values of cards (number/Ace)
         self.total = 0
         self.bust = False
+        self.stay = False
 
 
 class Dealer(Player):
@@ -144,6 +146,21 @@ def player_draw() -> bool:
         print(f"Total: {game.player.total}\n")
 
 
+def player_hit_stay():
+    valid = False
+    while not valid:
+        inp = input("Hit or Stay? (h/s)").lower()
+        if inp == "h" or inp == "hit":
+            valid = True
+            game.player.draw()
+        elif inp == "s" or inp == "stay":
+            print(f"You have {game.player.total}\n")
+            game.player.stay = True
+            valid = True
+        else:
+            print("Please input a valid response")
+
+
 game = Game()
 
 
@@ -160,10 +177,9 @@ def play_game():
 
         while not game.player.bust:
             player_draw()
-            while not valid:
-            inp = input("Hit or Stay? (h/s)").lower()
-            if inp == "h" or "hit":
-                pass
+            if game.player.bust or game.player.stay:
+                break
+            player_hit_stay()
 
 
 if __name__ == "__main__":
