@@ -170,7 +170,7 @@ def invalid():
 
 def print_hands():
     print("\nCurrent Hands:\n")
-    print(f"{game.player.name:<10}{'Dealer':<8}")
+    print(f"{game.player.name:<9}{'Dealer':<8}")
     [print(f"{player_card:<9} | {dealer_card:<10}") if i
         < len(game.dealer.cards) else print(f"{player_card:>8}")
      for i, (player_card, dealer_card) in enumerate(zip(
