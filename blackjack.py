@@ -1,4 +1,5 @@
 import random
+from time import sleep
 
 
 class Game:
@@ -8,9 +9,8 @@ class Game:
         self.ante = 5
         self.bet = 0
 
-        self.dealer = None
-        self.player = Player()
-        self.dealer = Dealer()
+        self.player = Player(input("What is your name?"))
+        self.dealer = Dealer("Dealer")
         self.setup()
 
     def setup(self):  # Initial game set up
@@ -27,6 +27,24 @@ class Game:
 
         self.player.reset()
         self.dealer.reset()
+
+    def greet():
+        print("---------------------\nWelcome to BlackJack! I am your dealer")
+        print("You have $100 to start - each hand has a $5 ante\n")
+
+    def ante() -> bool:
+        inp = input(
+            f"\nWould you like to ante ${game.ante} for the next round? You have "
+            f"${game.player.money} (y/n): ").lower()
+        if inp == "y":
+            game.player.money -= game.ante
+            game.bet += game.ante
+            return True
+        elif inp == "n":
+            return False
+        else:
+            invalid()
+            ante()
 
 
 class Deck:
@@ -64,16 +82,17 @@ class Card:
 
 
 class Player:
-    def __init__(self) -> None:
+    def __init__(self, name: str = "User") -> None:
         self.money = 100
         self.cards = []  # Card player receives
         self.hand = []  # List of values of cards (number/Ace)
         self.total = 0
         self.bust = False
         self.stay = False
+        self.name = name
 
     def draw(self) -> None:
-        """Draws new card, handles hand value assignment and total with Aces
+        """Draws new card, handles value assignment and total with Aces
         """
         self.cards.append(game.deck.draw_card())
         self.hand.append(self.cards[-1].value)
@@ -91,8 +110,18 @@ class Player:
                     [val if val != "A" else 1 for val in self.hand])
                 self.total = ace_one
 
+        print(f"\n{self.user} received a {self.cards[-1]}\n")
+
         if (self.total > 21):
             self.bust = True
+
+        sleep(.5)
+
+        if self.bust:
+            print(f"Total:  {self.total}. You busted!")
+        if self.total == 21:
+            print("You got 21! You stay")
+            self.stay = True
 
     def reset(self):
         """Reset hand for new round
@@ -109,12 +138,10 @@ class Player:
             inp = input("Hit or Stay? (h/s) ").lower()
             if inp == "h" or inp == "hit":
                 valid = True
-                if (type(self) == Player):
-                    player_draw()
-                else:
-                    dealer_draw()
+                player_draw()
             elif inp == "s" or inp == "stay":
-                print(f"\nYou stayed. You have {game.player.total}\n")
+                print(
+                    f"\n{self.name} stayed. {self.name} has {self.total} in hand\n")
                 self.stay = True
                 valid = True
             else:
@@ -129,26 +156,6 @@ class Dealer(Player):
 
 def invalid():
     print("Please input a valid response")
-
-
-def greet():
-    print("---------------------\nWelcome to BlackJack! I am your dealer")
-    print("You have $100 to start - each hand has a $5 ante\n")
-
-
-def ante() -> bool:
-    inp = input(
-        f"\nWould you like to ante ${game.ante} for the next round? You have "
-        f"${game.player.money} (y/n): ").lower()
-    if inp == "y":
-        game.player.money -= game.ante
-        game.bet += game.ante
-        return True
-    elif inp == "n":
-        return False
-    else:
-        invalid()
-        ante()
 
 
 def initial_draw():
@@ -166,7 +173,8 @@ def player_draw(first=False) -> bool:
     if first:
         game.player.draw()
         print(
-            f"\nYou received a {game.player.cards[0]} and a {game.player.cards[1]}\n")
+            f"\nYou received a {game.player.cards[0]} and a \
+                {game.player.cards[1]}\n")
     else:
         print(f"\nYou received a {game.player.cards[-1]}\n")
 
@@ -204,13 +212,13 @@ def win_loss():
     if game.player.bust:
         print("You lost this round!")
     elif game.player.total == 21 and len(game.player.hand) == 2:
-        print(f"You got BLACKJACK! You received {game.bet}.")
+        print(f"You got BLACKJACK! You received {game.bet * 3}.")
         game.player.money += game.bet * 3
     elif game.dealer.bust or game.player.total > game.dealer.total:
-        print(f"You win! You received {game.bet}.")
+        print(f"You win! You received {game.bet * 2}.")
         game.player.money += game.bet * 2
     elif game.dealer.bust or game.player.total <= game.dealer.total:
-        print(f"House wins, You lose!")
+        print("House wins, You lose!")
 
     game.reset()
 
@@ -221,20 +229,22 @@ game = Game()
 def play_game():
     game.setup()
 
-    greet()
+    game.greet()
 
     while (game.player.money > 0):
-        if not ante():
-            break
+        if not game.ante():
+            print("Thanks for playing!")
+            return
 
         initial_draw()  # Player and Dealer receive cards
 
         # Player turns (hit stay bust)
-        while not game.player.bust and not game.player.stay:
-            # player_draw()
-            if game.player.bust or game.player.stay:
-                break
-            game.player.hit_stay()
+        if (game.player.total == 21):  # this needs fixing
+            while not game.player.bust and not game.player.stay:
+                # player_draw()
+                if game.player.bust or game.player.stay:
+                    break
+                game.player.hit_stay()
 
         # Dealer turns (hit stay bust)
         # while not game.dealer.bust and not game.dealer.stay:
