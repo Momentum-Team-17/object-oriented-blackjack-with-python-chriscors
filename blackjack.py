@@ -1,16 +1,17 @@
 import random
 from time import sleep
+from itertools import cycle
 
 
 class Game:
     def __init__(self) -> None:
         self.deck = None
 
-        self.ante = 5
+        self.ante_amount = 5
         self.bet = 0
 
-        self.player = Player(input("What is your name?"))
-        self.dealer = Dealer("Dealer")
+        self.player = Player(input("\n\nWhat is your name?\n"))
+        self.dealer = Dealer()
         self.setup()
 
     def setup(self):  # Initial game set up
@@ -28,23 +29,24 @@ class Game:
         self.player.reset()
         self.dealer.reset()
 
-    def greet():
+    def greet(self):
         print("---------------------\nWelcome to BlackJack! I am your dealer")
         print("You have $100 to start - each hand has a $5 ante\n")
 
-    def ante() -> bool:
+    def ante(self) -> bool:
+        sleep(.5)
         inp = input(
-            f"\nWould you like to ante ${game.ante} for the next round? You have "
-            f"${game.player.money} (y/n): ").lower()
+            f"\nWould you like to ante ${self.ante_amount} for the next round?"
+            f" You have ${self.player.money} (y/n): ").lower()
         if inp == "y":
-            game.player.money -= game.ante
-            game.bet += game.ante
+            self.player.money -= self.ante_amount
+            self.bet += self.ante_amount
             return True
         elif inp == "n":
             return False
         else:
             invalid()
-            ante()
+            game.ante()
 
 
 class Deck:
@@ -80,6 +82,9 @@ class Card:
     def __str__(self) -> str:
         return f'{self.rank} of {self.suit}'
 
+    def __format__(self, __format_spec: str) -> str:
+        return f'{self.rank} of {self.suit}'
+
 
 class Player:
     def __init__(self, name: str = "User") -> None:
@@ -110,7 +115,7 @@ class Player:
                     [val if val != "A" else 1 for val in self.hand])
                 self.total = ace_one
 
-        print(f"\n{self.user} received a {self.cards[-1]}\n")
+        print(f"\n{self.name} received a {self.cards[-1]}")
 
         if (self.total > 21):
             self.bust = True
@@ -120,8 +125,9 @@ class Player:
         if self.bust:
             print(f"Total:  {self.total}. {self.name} busted!")
         if self.total == 21:
-            print(f"{self.name} got 21! {self.name} stays")
+            print(f"\n{self.name} got 21! {self.name} stays")
             self.stay = True
+            sleep(1)
 
     def reset(self):
         """Reset hand for new round
@@ -138,10 +144,11 @@ class Player:
             inp = input("Hit or Stay? (h/s) ").lower()
             if inp == "h" or inp == "hit":
                 valid = True
-                player_draw()
+                self.draw()
             elif inp == "s" or inp == "stay":
                 print(
-                    f"\n{self.name} stayed. {self.name} has {self.total} in hand\n")
+                    f"\n{self.name} stayed. {self.name} has {self.total} in "
+                    "hand")
                 self.stay = True
                 valid = True
             else:
@@ -149,8 +156,8 @@ class Player:
 
 
 class Dealer(Player):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, name: str = "Dealer") -> None:
+        super().__init__(name)
         self.money = None
 
 
@@ -163,9 +170,14 @@ def invalid():
 
 def print_hands():
     print("\nCurrent Hands:\n")
-    print(f"{game.player.name: < 11}{'Dealer': < 10}")
-    [print(f"{player_card: > 8} |  {dealer_card: <10}")
-     for player_card, dealer_card in zip(game.player.cards, game.dealer.cards)]
+    print(f"{game.player.name:<10}{'Dealer':<8}")
+    [print(f"{player_card:<9} | {dealer_card:<10}") if i
+        < len(game.dealer.cards) else print(f"{player_card:>8}")
+     for i, (player_card, dealer_card) in enumerate(zip(
+                                                    game.player.cards,
+                                                    cycle(game.dealer.cards)))]
+    print("\nTotal:")
+    print(f"{game.player.total:<6} | {game.dealer.total:<8}")
 
 
 def win_loss():
@@ -203,36 +215,39 @@ def play_game():
 
         print_hands()
 
-        # game.player.hit_stay()
-
         # Player turn
-        while not game.player.bust and not game.player.stay and game.player.total != 21:
-            # player_draw()
+        while not game.player.bust and not game.player.stay and \
+                game.player.total != 21:
             if game.player.bust or game.player.stay:
                 break
+            sleep(.5)
+            print()
             game.player.hit_stay()
             sleep(.5)
-            print_hands()
+            print_hands() if not game.player.stay and not game.player.bust\
+                else None
 
         # Dealer turn
         if not game.player.bust:
             sleep(.5)
             game.dealer.draw()
 
-        while game.dealer.total < 17:
+            while game.dealer.total < 17:
+                sleep(.5)
+                print("\nDealer draws again!")
+                sleep(.5)
+                game.dealer.draw()
+
+            if not game.dealer.bust and not game.dealer.stay:
+                sleep(.5)
+                print("\nDealer stays!")
+                game.dealer.stay = True
+
             sleep(.5)
-            print("Dealer draws again!")
-            sleep(5)
-            game.dealer.draw()
+            print_hands()
 
-        if not game.dealer.bust and not game.dealer.stay:
-            print("Dealer stays!")
-            game.dealer.stay = True
-
-        sleep(5)
-        print_hands()
-
-        sleep(5)
+        sleep(.5)
+        print()
         win_loss()
 
     print("You are out of money. Thanks for playing!")
