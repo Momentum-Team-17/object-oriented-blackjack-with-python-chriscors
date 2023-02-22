@@ -118,9 +118,9 @@ class Player:
         sleep(.5)
 
         if self.bust:
-            print(f"Total:  {self.total}. You busted!")
+            print(f"Total:  {self.total}. {self.name} busted!")
         if self.total == 21:
-            print("You got 21! You stay")
+            print(f"{self.name} got 21! {self.name} stays")
             self.stay = True
 
     def reset(self):
@@ -154,58 +154,18 @@ class Dealer(Player):
         self.money = None
 
 
+game = Game()
+
+
 def invalid():
     print("Please input a valid response")
 
 
-def initial_draw():
-    game.dealer.draw()
-    print(f"\nThe dealer drew a {game.dealer.cards[0]}")
-
-    player_draw(first=True)
-    # print(f"\nYou received a {game.player.cards[0]}\n")
-    game.player.hit_stay()
-    # ?is this the reason for double?
-
-
-def player_draw(first=False) -> bool:
-    game.player.draw()
-    if first:
-        game.player.draw()
-        print(
-            f"\nYou received a {game.player.cards[0]} and a \
-                {game.player.cards[1]}\n")
-    else:
-        print(f"\nYou received a {game.player.cards[-1]}\n")
-
-    if game.player.bust:
-        print(f"Total:  {game.player.total}. You busted!")
-    if game.player.total == 21:
-        print("You got 21! You stay")
-        game.player.stay = True
-    else:
-        print("Hand:")
-        [print(f"   {card}") for card in game.player.cards]
-        print(f"Total: {game.player.total}\n")
-
-
-def dealer_draw() -> bool:
-    game.dealer.draw()
-
-    print(f"\nDealer received a {game.dealer.cards[-1]}\n")
-    if game.dealer.bust:
-        print(f"Total:  {game.dealer.total}. Dealer busted!")
-    else:
-        print("Hand:")
-        [print(f"   {card}") for card in game.dealer.cards]
-        print(f"Total: {game.dealer.total}\n")
-
-    if game.dealer.total < 17:
-        print("Dealer draws again!")
-        dealer_draw()
-    else:
-        print("Dealer stays!")
-        game.dealer.stay = True
+def print_hands():
+    print("\nCurrent Hands:\n")
+    print(f"{game.player.name: < 11}{'Dealer': < 10}")
+    [print(f"{player_card: > 8} |  {dealer_card: <10}")
+     for player_card, dealer_card in zip(game.player.cards, game.dealer.cards)]
 
 
 def win_loss():
@@ -223,9 +183,6 @@ def win_loss():
     game.reset()
 
 
-game = Game()
-
-
 def play_game():
     game.setup()
 
@@ -236,23 +193,48 @@ def play_game():
             print("Thanks for playing!")
             return
 
-        initial_draw()  # Player and Dealer receive cards
+        # Initial deal
+        game.dealer.draw()
 
-        # Player turns (hit stay bust)
-        if (game.player.total == 21):  # this needs fixing
-            while not game.player.bust and not game.player.stay:
-                # player_draw()
-                if game.player.bust or game.player.stay:
-                    break
-                game.player.hit_stay()
+        sleep(.5)
+        game.player.draw()
+        sleep(.5)
+        game.player.draw()
 
-        # Dealer turns (hit stay bust)
-        # while not game.dealer.bust and not game.dealer.stay:
-        # ?I THINK this handles recursion for us
+        print_hands()
+
+        # game.player.hit_stay()
+
+        # Player turn
+        while not game.player.bust and not game.player.stay and game.player.total != 21:
+            # player_draw()
+            if game.player.bust or game.player.stay:
+                break
+            game.player.hit_stay()
+            sleep(.5)
+            print_hands()
+
+        # Dealer turn
         if not game.player.bust:
-            dealer_draw()
+            sleep(.5)
+            game.dealer.draw()
 
+        while game.dealer.total < 17:
+            sleep(.5)
+            print("Dealer draws again!")
+            sleep(5)
+            game.dealer.draw()
+
+        if not game.dealer.bust and not game.dealer.stay:
+            print("Dealer stays!")
+            game.dealer.stay = True
+
+        sleep(5)
+        print_hands()
+
+        sleep(5)
         win_loss()
+
     print("You are out of money. Thanks for playing!")
 
 
